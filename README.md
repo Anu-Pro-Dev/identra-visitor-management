@@ -1,4 +1,17 @@
+# Identra Visitor Management System
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+
+## Overview
+
+Identra Visitor Management System is a web application designed to streamline visitor management processes. It provides a user-friendly interface for managing visitor check-ins, authentication, and dashboard access.
+
+## Features
+
+- **Authentication**: Secure login functionality with form validation.
+- **Dashboard**: Access to visitor management tools and reports.
+- **Responsive Design**: Optimized for various devices.
+- **Integration**: Supports third-party authentication (e.g., Microsoft Azure).
 
 ## Getting Started
 
