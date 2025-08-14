@@ -93,6 +93,23 @@ function SidebarProvider({
     return isMobile ? setOpenMobile((open) => !open) : setOpen((open) => !open)
   }, [isMobile, setOpen, setOpenMobile])
 
+  // Restore sidebar open state from cookie on mount
+  React.useEffect(() => {
+    try {
+      const match = document.cookie
+        .split(";")
+        .map((c) => c.trim())
+        .find((c) => c.startsWith(`${SIDEBAR_COOKIE_NAME}=`))
+      if (match) {
+        const value = match.split("=")[1]
+        const persisted = value === "true"
+        _setOpen(persisted)
+      }
+    } catch {
+      // ignore cookie parse errors
+    }
+  }, [])
+
   // Adds a keyboard shortcut to toggle the sidebar.
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

@@ -15,7 +15,7 @@ import { IconBrandAzure, IconEye, IconEyeOff } from "@tabler/icons-react";
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { loginSchema } from "../schemas/loginSchema";
+import { loginSchema } from "../schemas/LoginSchema";
 import Link from "next/link";
 import Image from "next/image";
 export function LoginForm({
@@ -168,12 +168,12 @@ export function LoginForm({
             <div className="text-center">
               <p className="text-sm text-muted-foreground">
                 Don't have an account?{" "}
-                <a
-                  href="#"
+                <Link
+                  href="/register"
                   className="text-primary hover:text-primary/80 font-medium transition-colors duration-200"
                 >
-                  Contact Administrator
-                </a>
+                  Register here
+                </Link>
               </p>
             </div>
           </form>

@@ -1,9 +1,12 @@
-import React from 'react'
+import DashboardView from "@/modules/dashboard/view/page";
+import React from "react";
 
 function page() {
   return (
-    <div>page</div>
-  )
+    <div>
+      <DashboardView />
+    </div>
+  );
 }
 
-export default page
+export default page;

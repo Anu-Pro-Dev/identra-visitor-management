@@ -2,8 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ModeToggle } from "../common/ThemeToggler";
-import { IconBell, IconSearch } from "@tabler/icons-react";
-import { Input } from "../ui/input";
+import { IconBell } from "@tabler/icons-react";
 import { Badge } from "../ui/badge";
 
 export function SiteHeader() {

@@ -1,6 +1,5 @@
 "use client";
 import * as React from "react";
-import { NavDocuments } from "./nav-documents";
 import { NavMain } from "./nav";
 import { NavSecondary } from "./secondaryNav";
 import {
