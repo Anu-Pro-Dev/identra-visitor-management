@@ -8,7 +8,7 @@ i18n
   .use(initReactI18next)
   .init({
     fallbackLng: 'en',
-    supportedLngs: ['en', 'fr'],
+  supportedLngs: ['en', 'ar'],
     lng: 'en',
     debug: false,
     interpolation: {

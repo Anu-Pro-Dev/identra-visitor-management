@@ -84,7 +84,7 @@ const getRoleBasedNavigation = (role: string) => {
           },
           {
             title: "Roles",
-            url: "/dashboard/roles",
+            url: "/dashboard/role",
             icon: Shapes,
           },
           {

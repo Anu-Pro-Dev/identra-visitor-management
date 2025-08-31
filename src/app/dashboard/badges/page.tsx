@@ -1,9 +1,12 @@
-import React from 'react'
+import BadgesViewPage from "@/modules/badges/view/page";
+import React from "react";
 
 function page() {
   return (
-    <div>page</div>
-  )
+    <div>
+      <BadgesViewPage />
+    </div>
+  );
 }
 
-export default page
+export default page;

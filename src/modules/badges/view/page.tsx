@@ -19,13 +19,13 @@ import {
   VisibilityState,
 } from "@tanstack/react-table";
 
+import { badges } from "../components/BadgeListData";
+import { BadgeTableColumn } from "../components/BadgeTableColumn";
 import { Input } from "@/components/ui/input";
 import { Pagination } from "@/components/common/Pagination";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { reports } from "../components/ReportListData";
-import { ReportTableColumn } from "../components/ReportTableColumn";
 
-export default function ReportsViewPage() {
+export default function BadgesViewPage() {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -35,8 +35,8 @@ export default function ReportsViewPage() {
   const [rowSelection, setRowSelection] = React.useState({});
 
   const table = useReactTable({
-    data: reports,
-    columns: ReportTableColumn,
+    data: badges,
+    columns: BadgeTableColumn,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -59,19 +59,27 @@ export default function ReportsViewPage() {
         <div className="w-full space-y-4 sm:space-y-6">
           <h4 className="font-bold text-lg sm:text-xl lg:text-2xl tracking-tight text-primary flex items-center gap-2">
             <span className="inline-block w-1.5 h-4 sm:w-2 sm:h-6 rounded-full bg-primary/70"></span>
-            Reports
+            Badges
           </h4>
           <p className="text-sm sm:text-base text-muted-foreground font-medium">
-            View and export your reports here.
+            Manage visitor badges here.
           </p>
 
           {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-4">
             <Input
-              placeholder="Search by report name..."
-              value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+              placeholder="Search by visitor name..."
+              value={(table.getColumn("visitorName")?.getFilterValue() as string) ?? ""}
               onChange={(event) =>
-                table.getColumn("name")?.setFilterValue(event.target.value)
+                table.getColumn("visitorName")?.setFilterValue(event.target.value)
+              }
+              className="max-w-sm"
+            />
+            <Input
+              placeholder="Search by badge number..."
+              value={(table.getColumn("badgeNumber")?.getFilterValue() as string) ?? ""}
+              onChange={(event) =>
+                table.getColumn("badgeNumber")?.setFilterValue(event.target.value)
               }
               className="max-w-sm"
             />
@@ -86,8 +94,8 @@ export default function ReportsViewPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="Completed">Completed</SelectItem>
-                <SelectItem value="Pending">Pending</SelectItem>
+                <SelectItem value="Active">Active</SelectItem>
+                <SelectItem value="Expired">Expired</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -96,9 +104,9 @@ export default function ReportsViewPage() {
           <div className="w-full">
             {/* Mobile Card View for very small screens */}
             <div className="block sm:hidden space-y-3">
-              {/* Implement mobile card view for reports here */}
+              {/* Implement mobile card view for badges here */}
               <div className="bg-card border border-border rounded-lg p-8 text-center">
-                <p className="text-muted-foreground">No results found.</p>
+                <p className="text-muted-foreground">No badges found.</p>
               </div>
             </div>
 
@@ -154,7 +162,7 @@ export default function ReportsViewPage() {
                           colSpan={table.getAllColumns().length}
                           className="h-24 text-center text-muted-foreground"
                         >
-                          No results found.
+                          No badges found.
                         </TableCell>
                       </TableRow>
                     )}
