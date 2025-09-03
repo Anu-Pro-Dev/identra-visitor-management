@@ -18,26 +18,51 @@ import { useForm } from "react-hook-form";
 import { loginSchema } from "../schemas/LoginSchema";
 import Link from "next/link";
 import Image from "next/image";
+import { AuthClient } from "@/lib/auth/client";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
   const [showPassword, setShowPassword] = useState(false);
   const [isPending, setIsPending] = useState(false);
+  const router = useRouter();
+  
   const {
     register,
     handleSubmit,
     formState: { errors },
+    setError,
   } = useForm({
     resolver: zodResolver(loginSchema),
   });
-  const onSubmit = (data: any) => {
-    console.log(data);
-    setIsPending(true); // Set loading state
-    setTimeout(() => {
-      console.log("Login successful");
-      setIsPending(false); // Reset loading state
-    }, 2000);
+
+  const onSubmit = async (data: any) => {
+    setIsPending(true);
+    
+    try {
+      const result = await AuthClient.login(data.email, data.password);
+      
+      if (result.success) {
+        toast.success("Login successful!");
+        router.push("/dashboard");
+      } else {
+        setError("root", { 
+          type: "manual", 
+          message: result.error || "Login failed" 
+        });
+        toast.error(result.error || "Login failed");
+      }
+    } catch (error) {
+      setError("root", { 
+        type: "manual", 
+        message: "An unexpected error occurred" 
+      });
+      toast.error("An unexpected error occurred");
+    } finally {
+      setIsPending(false);
+    }
   };
   return (
     <div className={cn("flex flex-col gap-8", className)} {...props}>
@@ -163,6 +188,12 @@ export function LoginForm({
               >
                 {isPending ? "Signing In..." : "Sign In"}
               </Button>
+
+              {errors.root && (
+                <p className="mt-2 text-sm text-red-600 text-center">
+                  {errors.root.message}
+                </p>
+              )}
             </div>
 
             <div className="text-center">
@@ -175,6 +206,14 @@ export function LoginForm({
                   Register here
                 </Link>
               </p>
+              <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+                <p className="text-xs text-muted-foreground font-medium mb-2">Demo Credentials:</p>
+                <div className="text-xs text-muted-foreground space-y-1">
+                  <div><strong>Admin:</strong> admin@example.com / password</div>
+                  <div><strong>Host:</strong> host@example.com / password</div>
+                  <div><strong>Security:</strong> security@example.com / password</div>
+                </div>
+              </div>
             </div>
           </form>
         </CardContent>

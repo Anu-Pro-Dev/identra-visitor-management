@@ -7,13 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function RegisterPageRoute() {
-  return (
-      <RegisterPage
-        dashboardData={{
-          stats: {},
-          navigation: { navMain: [], secondaryNav: [] },
-          accessibleRoutes: [],
-        }}
-      />
-  );
+  return <RegisterPage />;
 }

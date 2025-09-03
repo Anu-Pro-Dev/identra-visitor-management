@@ -17,6 +17,10 @@ import { Separator } from "../ui/separator";
 import { LogoIcon } from "../common/svg/icons";
 import { Button } from "../ui/button";
 import { IconUser, IconLogout } from "@tabler/icons-react";
+import { useEffect, useState } from "react";
+import { AuthClient, User } from "@/lib/auth/client";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export function AppSidebar(
   props: React.ComponentProps<typeof Sidebar> & {
@@ -25,6 +29,22 @@ export function AppSidebar(
 ) {
   const { role, ...sidebarProps } = props;
   const data = getRoleBasedNavigation(role);
+  const [user, setUser] = useState<User | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    const loadUser = async () => {
+      const currentUser = await AuthClient.getCurrentUser();
+      setUser(currentUser);
+    };
+    loadUser();
+  }, []);
+
+  const handleLogout = async () => {
+    await AuthClient.logout();
+    toast.success("Logged out successfully");
+    router.push("/");
+  };
   
   return (
     <Sidebar collapsible="offcanvas" className="" {...sidebarProps}>
@@ -66,13 +86,19 @@ export function AppSidebar(
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-sidebar-foreground truncate">
-              Admin User
+              {user?.name || "Loading..."}
             </p>
             <p className="text-xs text-sidebar-foreground/60 truncate">
-              admin@identra.com
+              {user?.email || ""}
             </p>
           </div>
-          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-8 w-8 p-0 hover:bg-destructive/20"
+            onClick={handleLogout}
+            title="Logout"
+          >
             <IconLogout className="h-4 w-4" />
           </Button>
         </div>

@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   registerStepOneSchema,
   registerStepTwoSchema,
@@ -15,6 +17,7 @@ export function useMultiStepForm() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isPending, setIsPending] = useState(false);
   const [formData, setFormData] = useState<Partial<FullRegisterData>>({});
+  const router = useRouter();
 
   const stepOneForm = useForm<RegisterStepOne>({
     resolver: zodResolver(registerStepOneSchema),
@@ -65,14 +68,14 @@ export function useMultiStepForm() {
     
     if (isValid) {
       const currentData = getCurrentStepData();
-      setFormData({ ...formData, ...currentData });
+      setFormData(prev => ({ ...prev, ...currentData }));
       setCurrentStep(prev => Math.min(prev + 1, totalSteps));
     }
   };
 
   const previousStep = () => {
     const currentData = getCurrentStepData();
-    setFormData({ ...formData, ...currentData });
+    setFormData(prev => ({ ...prev, ...currentData }));
     setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
@@ -92,11 +95,18 @@ export function useMultiStepForm() {
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       console.log("Registration successful");
+      toast.success("Registration successful! Redirecting...");
+      
+      // Redirect to login page
+      setTimeout(() => {
+        router.push("/");
+      }, 1000);
+      
       setIsPending(false);
-      // Redirect to success page or dashboard
       return true;
     } catch (error) {
       console.error("Registration failed:", error);
+      toast.error("Registration failed. Please try again.");
       setIsPending(false);
       return false;
     }
@@ -105,7 +115,7 @@ export function useMultiStepForm() {
   const goToStep = (step: number) => {
     if (step >= 1 && step <= totalSteps) {
       const currentData = getCurrentStepData();
-      setFormData({ ...formData, ...currentData });
+      setFormData(prev => ({ ...prev, ...currentData }));
       setCurrentStep(step);
     }
   };
