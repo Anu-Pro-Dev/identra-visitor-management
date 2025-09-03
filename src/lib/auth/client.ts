@@ -59,6 +59,7 @@ const mockUsers: Record<string, User> = {
     permissions: [
       { resource: "dashboard", action: "read" },
       { resource: "visitors", action: "read" },
+      { resource: "visitors", action: "write" },
       { resource: "approvals", action: "read" },
       { resource: "badges", action: "read" },
       { resource: "badges", action: "write" },

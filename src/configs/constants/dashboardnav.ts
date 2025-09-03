@@ -1,4 +1,16 @@
-import { Badge, Building2, CalendarCheck2, FileTextIcon, Grid2x2Plus, LayoutDashboard, Shapes, UserPlus2, Users2Icon } from "lucide-react";
+import {
+  Badge,
+  Building2,
+  CalendarCheck2,
+  FileTextIcon,
+  Grid2x2Plus,
+  LayoutDashboard,
+  Shapes,
+  UserPlus2,
+  Users2Icon,
+  Tags,
+  History,
+} from "lucide-react";
 
 const getRoleBasedNavigation = (role: string) => {
   switch (role.toLowerCase()) {
@@ -43,9 +55,9 @@ const getRoleBasedNavigation = (role: string) => {
             icon: CalendarCheck2,
           },
           {
-            title: "Register user",
-            url: "/register",
-            icon: UserPlus2,
+            title: "Visitors list",
+            url: "/dashboard/visitors",
+            icon: Users2Icon,
           },
           {
             title: "Reports",
@@ -66,14 +78,19 @@ const getRoleBasedNavigation = (role: string) => {
             icon: Grid2x2Plus,
           },
           {
-            title: "Register user",
-            url: "/register",
-            icon: UserPlus2,
-          },
-          {
             title: "Approvals",
             url: "/dashboard/approvals",
             icon: CalendarCheck2,
+          },
+          {
+            title: "Visitors list",
+            url: "/dashboard/visitors",
+            icon: Users2Icon,
+          },
+          {
+            title: "History",
+            url: "/dashboard/history",
+            icon: History,
           },
         ],
         secondaryNav: [
@@ -87,6 +104,12 @@ const getRoleBasedNavigation = (role: string) => {
             url: "/dashboard/role",
             icon: Shapes,
           },
+          {
+            title: "Categories",
+            url: "/dashboard/categories",
+            icon: Tags,
+          },
+
           {
             title: "Badges",
             url: "/dashboard/badges",

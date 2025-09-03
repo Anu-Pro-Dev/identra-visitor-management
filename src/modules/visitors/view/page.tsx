@@ -1,7 +1,7 @@
 // Visitors main view (to be filled with modern UI, shadcn, and animation)
 
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Tabs,
   TabsContent,
@@ -16,13 +16,26 @@ import { Input } from "@/components/ui/input";
 import { VisitorsList } from "../components/VisitorsList";
 import { VisitorsCalendarView } from "../components/VisitorsCalendarView";
 import { VisitorsChart } from "../components/VisitorsChart";
+import { AddVisitorDialog } from "../components/AddVisitorDialog";
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format } from "date-fns";
+import { AuthClient } from "@/lib/auth/client";
 
 export default function VisitorsPage() {
   const [view, setView] = useState("Calendar view");
+  const [userRole, setUserRole] = useState<string>("");
+
+  useEffect(() => {
+    const loadUserRole = async () => {
+      const user = await AuthClient.getCurrentUser();
+      setUserRole(user?.role || "");
+    };
+    loadUserRole();
+  }, []);
+
+  const canAddVisitor = userRole.toLowerCase() === "security";
   return (
     <Tabs defaultValue="list" className="w-full">
       <div className="flex flex-col gap-4 w-full">
@@ -60,9 +73,7 @@ export default function VisitorsPage() {
               />
             </div>
 
-            <Button variant="default" className="flex items-center px-4 gap-2 rounded-full font-bold text-sm bg-primary hover:bg-primary/90 text-primary-foreground">
-              + Add Visitor
-            </Button>
+            <AddVisitorDialog canAdd={canAddVisitor} />
           </div>
         </div>
 

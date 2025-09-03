@@ -23,8 +23,11 @@ const pageTransition = {
 
 export function RegisterForm({
   className,
+  onSuccess,
   ...props
-}: React.ComponentProps<"div">) {
+}: React.ComponentProps<"div"> & {
+  onSuccess?: () => void;
+}) {
   const {
     currentStep,
     totalSteps,
@@ -36,7 +39,7 @@ export function RegisterForm({
     previousStep,
     submitForm,
     goToStep,
-  } = useMultiStepForm();
+  } = useMultiStepForm(onSuccess);
 
   const renderCurrentStep = () => {
     switch (currentStep) {

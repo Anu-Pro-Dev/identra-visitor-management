@@ -13,7 +13,7 @@ import {
   FullRegisterData,
 } from "../schema/RegisterSchema";
 
-export function useMultiStepForm() {
+export function useMultiStepForm(onSuccess?: () => void) {
   const [currentStep, setCurrentStep] = useState(1);
   const [isPending, setIsPending] = useState(false);
   const [formData, setFormData] = useState<Partial<FullRegisterData>>({});
@@ -95,12 +95,17 @@ export function useMultiStepForm() {
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       console.log("Registration successful");
-      toast.success("Registration successful! Redirecting...");
+      toast.success("Visitor registered successfully!");
       
-      // Redirect to login page
-      setTimeout(() => {
-        router.push("/");
-      }, 1000);
+      if (onSuccess) {
+        // Call the onSuccess callback (for dialog mode)
+        onSuccess();
+      } else {
+        // Redirect to login page (for standalone registration)
+        setTimeout(() => {
+          router.push("/");
+        }, 1000);
+      }
       
       setIsPending(false);
       return true;
