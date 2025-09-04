@@ -2,32 +2,12 @@
 'use client'
 
 import * as React from "react";
-
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from "@/components/ui/table";
-import {
-	ColumnDef,
-	flexRender,
-	getCoreRowModel,
-	getFilteredRowModel,
-	getPaginationRowModel,
-	getSortedRowModel,
-	useReactTable,
-	SortingState,
-	ColumnFiltersState,
-	VisibilityState,
-} from "@tanstack/react-table";
-import { DataTablePagination } from "./data-table-pagination";
-import { DataTableToolbar } from "./data-table-toolbar";
+import { useTranslation } from "@/hooks/useTranslation";
+import { GenericTable, TableColumn } from "@/components/common/GenericTable";
+import { CustomPagination } from "@/components/common/Pagination";
 
 	interface DataTableProps<TData, TValue> {
-		columns: ColumnDef<TData, TValue>[];
+		columns: any[];
 		data: any[];
 		statusFilter: string;
 		setStatusFilter: (status: string) => void;
@@ -39,10 +19,7 @@ import { DataTableToolbar } from "./data-table-toolbar";
 		statusFilter,
 		setStatusFilter,
 	}: DataTableProps<TData, TValue>) {
-		const [sorting, setSorting] = React.useState<SortingState>([]);
-		const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-		const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
-		const [rowSelection, setRowSelection] = React.useState({});
+		const { t } = useTranslation();
 
 		const statusContent: Record<string, { title: string; description: string }> = {
 			pending: {
@@ -71,32 +48,64 @@ import { DataTableToolbar } from "./data-table-toolbar";
 			},
 		};
 
-		const table = useReactTable({
-			data,
-			columns,
-			onSortingChange: setSorting,
-			onColumnFiltersChange: setColumnFilters,
-			getCoreRowModel: getCoreRowModel(),
-			getPaginationRowModel: getPaginationRowModel(),
-			getSortedRowModel: getSortedRowModel(),
-			getFilteredRowModel: getFilteredRowModel(),
-			onColumnVisibilityChange: setColumnVisibility,
-			onRowSelectionChange: setRowSelection,
-			state: {
-				sorting,
-				columnFilters,
-				columnVisibility,
-				rowSelection,
-			},
-		});
+		// Pagination state
+		const [page, setPage] = React.useState(1);
+		const [pageSize, setPageSize] = React.useState(10);
+		const pageSizeOptions = [10, 20, 50, 100];
+		const paginatedData = React.useMemo(() => {
+			const start = (page - 1) * pageSize;
+			return data.slice(start, start + pageSize);
+		}, [data, page, pageSize]);
+		const totalPages = Math.ceil(data.length / pageSize);
 
-		return (
+		// Map columns to TableColumn format for GenericTable
+		const genericColumns: TableColumn<any>[] = columns.map((col: any) => ({
+			key: col.id || col.accessorKey || col.header,
+			header: typeof col.header === 'string' ? col.header : '',
+			accessor: (item: any) => {
+				if (typeof col.cell === 'function') {
+					return col.cell({ row: { original: item } });
+				}
+				return item[col.accessorKey];
+			},
+		}));
+
+	// Selection logic
+	const [selected, setSelected] = React.useState<Array<string | number>>([]);
+	const getItemId = (item: any) => item.id;
+	const getItemDisplayName = (item: any) => item.name || item.id;
+	const handleSelectItem = (id: string | number) => {
+		setSelected((prev) => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+	};
+	const handleSelectAll = () => {
+		if (selected.length === paginatedData.length) {
+			setSelected([]);
+		} else {
+			setSelected(paginatedData.map(getItemId));
+		}
+	};		return (
 			<div className="mt-4 w-full overflow-x-auto">
-				<DataTableToolbar 
-					table={table}  
-					statusFilter={statusFilter}
-					setStatusFilter={setStatusFilter}
-				/>
+				{/* Custom toolbar - simplified without table dependency */}
+				<div className="mb-4 p-4 border rounded-lg">
+					<h4 className="font-semibold text-lg mb-2">Filter by Status</h4>
+					<div className="flex gap-2 flex-wrap">
+						{[
+							"pending", "approved", "rejected", "cancelled","pending security","rejected by security"
+						].map((status) => (
+							<button
+								key={status}
+								onClick={() => setStatusFilter(status)}
+								className={`capitalize px-4 py-2 rounded border ${
+									statusFilter === status
+										? "bg-primary text-primary-foreground"
+										: "bg-background hover:bg-muted"
+								}`}
+							>
+								{status.replace('pending security','pending sec.').replace('rejected by security','rejected sec.')}
+							</button>
+						))}
+					</div>
+				</div>
 				<div className="rounded-2xl border bg-card border-border shadow-xl transition-shadow duration-300 hover:shadow-2xl min-w-[600px]">
 					<div className="px-10 space-y-2 pt-7 pb-5 border-b border-border bg-gradient-to-r from-background via-card to-background rounded-t-2xl">
 						<h4 className="font-extrabold text-2xl tracking-tight text-primary flex items-center gap-2">
@@ -125,51 +134,31 @@ import { DataTableToolbar } from "./data-table-toolbar";
 							))}
 						</div>
 					</div>
-					<div className="w-full overflow-x-auto">
-						<Table className="bg-card rounded-b-2xl overflow-hidden min-w-full">
-							<TableHeader>
-								{table.getHeaderGroups().map((headerGroup) => (
-									<TableRow key={headerGroup.id} className="">
-										{headerGroup.headers.map((header: any) => (
-											<TableHead key={header.id} className="px-8 py-4 font-bold text-lg text-muted-foreground bg-background/60 backdrop-blur-md border-b border-border first:rounded-bl-2xl last:rounded-br-2xl">
-												{header.isPlaceholder
-													? null
-													: flexRender(
-															header.column.columnDef.header,
-															header.getContext()
-														)}
-											</TableHead>
-										))}
-									</TableRow>
-								))}
-							</TableHeader>
-							<TableBody>
-								{table.getRowModel().rows?.length ? (
-									table.getRowModel().rows.map((row: any) => (
-										<TableRow
-											key={row.id}
-											data-state={row.getIsSelected() && "selected"}
-											className="border-0 hover:bg-accent/40 transition-colors duration-150"
-										>
-											{row.getVisibleCells().map((cell: any) => (
-												<TableCell key={cell.id} className="px-8 py-4 font-medium text-base text-foreground">
-													{flexRender(cell.column.columnDef.cell, cell.getContext())}
-												</TableCell>
-											))}
-										</TableRow>
-									))
-								) : (
-									<TableRow>
-										<TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
-											No results.
-										</TableCell>
-									</TableRow>
-								)}
-							</TableBody>
-						</Table>
-					</div>
+					<GenericTable
+						data={paginatedData}
+						columns={genericColumns}
+						selected={selected}
+						page={page}
+						pageSize={pageSize}
+						allChecked={selected.length === paginatedData.length && paginatedData.length > 0}
+						getItemId={getItemId}
+						getItemDisplayName={getItemDisplayName}
+						onSelectItem={handleSelectItem}
+						onSelectAll={handleSelectAll}
+						noDataMessage={"No results."}
+						isLoading={false}
+						onPageChange={setPage}
+						onPageSizeChange={setPageSize}
+					/>
+					<CustomPagination
+						currentPage={page}
+						totalPages={totalPages}
+						onPageChange={setPage}
+						pageSize={pageSize}
+						pageSizeOptions={pageSizeOptions}
+						onPageSizeChange={setPageSize}
+					/>
 				</div>
-				<DataTablePagination table={table} />
 			</div>
 		);
 	}

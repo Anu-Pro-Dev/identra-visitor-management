@@ -4,9 +4,9 @@ import { Company } from "../types";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { DataTable } from "@/components/common/DataTable";
-import { MoreVertical } from "lucide-react";
-import { Pagination } from "@/components/common/Pagination";
+import { useTranslation } from "@/hooks/useTranslation";
+import { GenericTable, TableColumn } from "@/components/common/GenericTable";
+import { CustomPagination } from "@/components/common/Pagination";
 
 const mockData: Company[] = [
   { id: "1", date: "2021-01-24", company: "Al Jazeera Tech Solutions", category: "VIP" },
@@ -17,58 +17,75 @@ const mockData: Company[] = [
   { id: "6", date: "2021-01-24", company: "Noor Enterprises", category: "VIP" },
 ];
 
-export function CompanyTable({
-  companyFilter,
-  setCompanyFilter,
-}: {
-  companyFilter: string;
-  setCompanyFilter: (value: string) => void;
-}) {
-  const [selected, setSelected] = React.useState<string[]>([]);
-  const [pageIndex, setPageIndex] = React.useState(0);
-  const pageSize = 5;
+// ...existing code...
+export function CompanyTable(props: { companyFilter: string; setCompanyFilter: (value: string) => void }) {
+  const { companyFilter, setCompanyFilter } = props;
+  const { t } = useTranslation();
+  const [selected, setSelected] = React.useState<Array<string | number>>([]);
+  const [page, setPage] = React.useState(1);
+  const [pageSize, setPageSize] = React.useState(5);
+  const pageSizeOptions = [5, 10, 20, 50];
   const filtered = mockData.filter((c) => c.company.toLowerCase().includes(companyFilter.toLowerCase()));
-  const paged = filtered.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize);
+  const paginatedData = filtered.slice((page - 1) * pageSize, page * pageSize);
+  const totalPages = Math.ceil(filtered.length / pageSize);
 
-  const columns = [
-    { key: 'company' as keyof Company, label: 'Company' },
-    { key: 'category' as keyof Company, label: 'Category' },
-    { key: 'date' as keyof Company, label: 'Created on' },
+  const genericColumns: TableColumn<Company>[] = [
+    {
+      key: "company",
+      header: t("common.company"),
+      accessor: (item) => item.company,
+    },
+    {
+      key: "category",
+      header: t("common.category"),
+      accessor: (item) => item.category,
+    },
+    {
+      key: "date",
+      header: t("common.createdOn"),
+      accessor: (item) => item.date,
+    },
   ];
 
-  const renderCell = (row: Company, key: keyof Company) => {
-    if (key === 'date') {
-      return (
-        <div className="flex items-center justify-between">
-          <span>{row.date}</span>
-          <Button variant="ghost" className="h-8 w-8 p-0">
-            <span className="sr-only">Open menu</span>
-            <MoreVertical className="h-4 w-4 text-[#64748B]" />
-          </Button>
-        </div>
-      );
+  const getItemId = (item: Company) => item.id;
+  const getItemDisplayName = (item: Company) => item.company;
+  const handleSelectItem = (id: string | number) => {
+    setSelected((prev) => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  };
+  const handleSelectAll = () => {
+    if (selected.length === paginatedData.length) {
+      setSelected([]);
+    } else {
+      setSelected(paginatedData.map(getItemId));
     }
-    return row[key] as React.ReactNode;
   };
 
   return (
     <Card className="w-full rounded-md p-4 overflow-x-auto">
-      <DataTable
-        columns={columns}
-        data={paged}
-        renderCell={renderCell}
-        selectable={true}
+      <GenericTable
+        data={paginatedData}
+        columns={genericColumns}
         selected={selected}
-        onSelectionChange={(sel) => setSelected(sel as string[])}
+        page={page}
+        pageSize={pageSize}
+        allChecked={selected.length === paginatedData.length && paginatedData.length > 0}
+        getItemId={getItemId}
+        getItemDisplayName={getItemDisplayName}
+        onSelectItem={handleSelectItem}
+        onSelectAll={handleSelectAll}
+        noDataMessage={t("common.noResults")}
+        isLoading={false}
+        onPageChange={setPage}
+        onPageSizeChange={setPageSize}
       />
-      <div className="pt-2">
-        <Pagination
-          page={pageIndex + 1}
-          pageSize={pageSize}
-          total={filtered.length}
-          onPageChange={(p) => setPageIndex(p - 1)}
-        />
-      </div>
-    </Card>
+      <CustomPagination
+        currentPage={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        pageSize={pageSize}
+        pageSizeOptions={pageSizeOptions}
+        onPageSizeChange={setPageSize}
+      />
+  </Card>
   );
 }

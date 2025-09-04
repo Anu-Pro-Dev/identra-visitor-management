@@ -1,70 +1,128 @@
+"use client";
 import React from "react";
-import { Button } from "@/components/ui/button";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-
-export interface PaginationProps {
-  page: number;
-  pageSize: number;
-  total: number;
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+} from "@/components/ui/pagination";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useTranslation } from "@/hooks/useTranslation";
+interface PaginationProps {
+  currentPage: number;
+  totalPages: number;
   onPageChange: (page: number) => void;
-  onPageSizeChange?: (pageSize: number) => void;
-  pageSizeOptions?: number[];
+  pageSize: number;
+  pageSizeOptions: number[];
+  onPageSizeChange: (size: number) => void;
 }
 
-export function Pagination({
-  page,
-  pageSize,
-  total,
+export const CustomPagination: React.FC<PaginationProps> = ({
+  currentPage,
+  totalPages,
   onPageChange,
+  pageSize,
+  pageSizeOptions,
   onPageSizeChange,
-  pageSizeOptions = [10, 20, 30, 40, 50]
-}: PaginationProps) {
-  const totalPages = Math.ceil(total / pageSize);
-  if (totalPages <= 1 && !onPageSizeChange) return null;
+}) => {
+  const { t } = useTranslation();
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      onPageChange(page);
+    }
+  };
+
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisible = 5;
+
+    if (totalPages <= maxVisible) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      const start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+      const end = Math.min(totalPages, start + maxVisible - 1);
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+    }
+
+    return pages;
+  };
+
+  const pageNumbers = getPageNumbers();
 
   return (
-    <div className="flex items-center justify-between mb-4 w-full">
-      {onPageSizeChange && (
-        <div className="flex items-center space-x-3 text-base text-muted-foreground">
-          <Select
-            value={`${pageSize}`}
-            onValueChange={(value) => onPageSizeChange(Number(value))}
-          >
-            <SelectTrigger className="h-9 w-[80px] text-muted-foreground rounded-xl shadow bg-background/80 border border-border font-semibold">
-              <SelectValue placeholder={pageSize} />
-            </SelectTrigger>
-            <SelectContent side="top">
-              {pageSizeOptions.map((size) => (
-                <SelectItem key={size} value={`${size}`} className="rounded-lg">
-                  {size}
-                </SelectItem>
+    <div className="mt-10 px-4 flex flex-col md:flex-row justify-center items-center gap-4">
+      <Pagination>
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationPrevious
+              onClick={() => handlePageChange(currentPage - 1)}
+              aria-disabled={currentPage === 1}
+              className={
+                currentPage === 1
+                  ? "pointer-events-none opacity-50"
+                  : "cursor-pointer"
+              }
+            />
+          </PaginationItem>
+
+          {pageNumbers.map((pageNum) => (
+            <PaginationItem key={pageNum}>
+              <PaginationLink
+                isActive={currentPage === pageNum}
+                onClick={() => handlePageChange(pageNum)}
+                href="#"
+                className="cursor-pointer"
+              >
+                {pageNum}
+              </PaginationLink>
+            </PaginationItem>
+          ))}
+
+          <PaginationItem>
+            <PaginationNext
+              onClick={() => handlePageChange(currentPage + 1)}
+              aria-disabled={currentPage === totalPages || totalPages === 0}
+              className={
+                currentPage === totalPages || totalPages === 0
+                  ? "pointer-events-none opacity-50"
+                  : "cursor-pointer"
+              }
+            />
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
+      <div className="flex items-center gap-2">
+        <label htmlFor="pagination-limit" className="text-sm text-muted-foreground">
+          {t("common.limit") || "Limit"}
+        </label>
+        <Select value={pageSize.toString()} onValueChange={val => onPageSizeChange(Number(val))}>
+          <SelectTrigger className="w-[90px]">
+            <SelectValue placeholder={t("common.limit") || "Limit"} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectLabel>{t("common.limit") || "Limit"}</SelectLabel>
+              {pageSizeOptions.map(opt => (
+                <SelectItem key={opt} value={opt.toString()}>{opt}</SelectItem>
               ))}
-            </SelectContent>
-          </Select>
-          <p className="text-base text-muted-foreground font-semibold">Rows per page</p>
-        </div>
-      )}
-      <div className="flex items-center gap-2 mt-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onPageChange(page - 1)}
-          disabled={page === 1}
-        >
-          Prev
-        </Button>
-        <span className="text-sm text-muted-foreground">
-          Page {page} of {totalPages}
-        </span>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onPageChange(page + 1)}
-          disabled={page === totalPages}
-        >
-          Next
-        </Button>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
       </div>
     </div>
   );
-}
+};

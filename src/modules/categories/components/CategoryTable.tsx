@@ -1,59 +1,26 @@
 "use client";
 
 import { useState } from "react";
-import {
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-  SortingState,
-  ColumnFiltersState,
-  VisibilityState,
-} from "@tanstack/react-table";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { useTranslation } from "@/hooks/useTranslation";
+import { GenericTable, TableColumn } from "@/components/common/GenericTable";
+import { CustomPagination } from "@/components/common/Pagination";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Trash2 } from "lucide-react";
 import { Category, CategoryFormData } from "../types";
-import { categoryColumns } from "./CategoryColumns";
 import { AddCategoryDialog } from "./AddCategoryDialog";
 import { mockCategories } from "../data/mockCategories";
 import { toast } from "sonner";
 
 export function CategoryTable() {
   const [categories, setCategories] = useState<Category[]>(mockCategories);
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = useState({});
-
-  const table = useReactTable({
-    data: categories,
-    columns: categoryColumns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    state: {
-      sorting,
-      columnFilters,
-      columnVisibility,
-      rowSelection,
-    },
-  });
+  const { t } = useTranslation();
+  
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const pageSizeOptions = [10, 20, 50, 100];
+  const paginatedData = categories.slice((page - 1) * pageSize, page * pageSize);
+  const totalPages = Math.ceil(categories.length / pageSize);
 
   const handleAddCategory = (categoryData: CategoryFormData) => {
     const newCategory: Category = {
@@ -71,122 +38,88 @@ export function CategoryTable() {
     setCategories([...categories, newCategory]);
   };
 
-  const handleDeleteSelected = () => {
-    const selectedRows = table.getFilteredSelectedRowModel().rows;
-    const selectedIds = selectedRows.map((row) => row.original.id);
-    
-    setCategories(categories.filter((category) => !selectedIds.includes(category.id)));
-    setRowSelection({});
-    toast.success(`Deleted ${selectedIds.length} categories`);
-  };
+  // Table columns for GenericTable
+  const genericColumns: TableColumn<any>[] = [
+    {
+      key: "name",
+      header: t("common.category"),
+      accessor: (item) => item.name,
+    },
+    {
+      key: "description",
+      header: t("common.description"),
+      accessor: (item) => item.description,
+    },
+    {
+      key: "createdAt",
+      header: t("common.createdOn"),
+      accessor: (item) => item.createdAt,
+    },
+  ];
 
-  const hasSelectedRows = Object.keys(rowSelection).length > 0;
+  // Selection logic
+  const [selected, setSelected] = useState<(string | number)[]>([]);
+  const getItemId = (item: any) => item.id as string;
+  const getItemDisplayName = (item: any) => item.name;
+  const handleSelectItem = (id: string | number) => {
+    setSelected((prev) => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  };
+  const handleSelectAll = () => {
+    if (selected.length === paginatedData.length) {
+      setSelected([]);
+    } else {
+      setSelected(paginatedData.map(getItemId));
+    }
+  };
 
   return (
     <div className="space-y-4">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Category</h1>
-          <p className="text-sm text-muted-foreground">category</p>
+          <h1 className="text-2xl font-bold">{t("common.category")}</h1>
+          <p className="text-sm text-muted-foreground">{t("common.category")}</p>
         </div>
         <div className="flex items-center gap-3">
-          <Input
-            placeholder="Search employee, updates..."
-            value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-            onChange={(event) =>
-              table.getColumn("name")?.setFilterValue(event.target.value)
-            }
-            className="max-w-sm"
-          />
           <AddCategoryDialog onAdd={handleAddCategory} />
-          {hasSelectedRows && (
+          {selected.length > 0 && (
             <Button
               variant="destructive"
-              onClick={handleDeleteSelected}
+              onClick={() => {
+                setCategories(categories.filter((cat) => !selected.includes(cat.id)));
+                setSelected([]);
+                toast.success(`${selected.length} ${t("common.category")} ${t("common.delete")}`);
+              }}
             >
               <Trash2 className="mr-2 h-4 w-4" />
-              Delete
+              {t("common.delete")}
             </Button>
           )}
         </div>
       </div>
-
-      {/* Table */}
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={categoryColumns.length}
-                  className="h-24 text-center"
-                >
-                  No categories found.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* Pagination */}
-      <div className="flex items-center justify-end space-x-2">
-        <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
-        </div>
-        <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </Button>
-        </div>
-      </div>
+      <GenericTable
+        data={paginatedData}
+        columns={genericColumns}
+        selected={selected}
+        page={page}
+        pageSize={pageSize}
+        allChecked={selected.length === paginatedData.length && paginatedData.length > 0}
+        getItemId={getItemId}
+        getItemDisplayName={getItemDisplayName}
+        onSelectItem={handleSelectItem}
+        onSelectAll={handleSelectAll}
+        noDataMessage={t("common.noResults")}
+        isLoading={false}
+        onPageChange={setPage}
+        onPageSizeChange={setPageSize}
+      />
+      <CustomPagination
+        currentPage={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        pageSize={pageSize}
+        pageSizeOptions={pageSizeOptions}
+        onPageSizeChange={setPageSize}
+      />
     </div>
   );
 }

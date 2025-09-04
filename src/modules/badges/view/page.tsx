@@ -1,57 +1,79 @@
 "use client";
 
 import * as React from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-  SortingState,
-  ColumnFiltersState,
-  VisibilityState,
-} from "@tanstack/react-table";
-
-import { badges } from "../components/BadgeListData";
-import { BadgeTableColumn } from "../components/BadgeTableColumn";
+import { useState } from "react";
+import { useTranslation } from "@/hooks/useTranslation";
+import { GenericTable, TableColumn } from "@/components/common/GenericTable";
+import { CustomPagination } from "@/components/common/Pagination";
 import { Input } from "@/components/ui/input";
-import { Pagination } from "@/components/common/Pagination";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { badges } from "../components/BadgeListData";
+import { Badge } from "../components/BadgeTableColumn";
 
 export default function BadgesViewPage() {
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = React.useState({});
+  const { t } = useTranslation();
+  const [badgeData, setBadgeData] = useState<Badge[]>(badges);
+  
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const pageSizeOptions = [10, 20, 50, 100];
+  
+  // Filter states
+  const [visitorNameFilter, setVisitorNameFilter] = useState("");
+  const [badgeNumberFilter, setBadgeNumberFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
 
-  const table = useReactTable({
-    data: badges,
-    columns: BadgeTableColumn,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    state: {
-      sorting,
-      columnFilters,
-      columnVisibility,
-      rowSelection,
-    },
+  // Apply filters
+  const filteredData = badgeData.filter((badge) => {
+    const matchesVisitorName = badge.visitorName.toLowerCase().includes(visitorNameFilter.toLowerCase());
+    const matchesBadgeNumber = badge.badgeNumber.toLowerCase().includes(badgeNumberFilter.toLowerCase());
+    const matchesStatus = statusFilter === "" || badge.status === statusFilter;
+    
+    return matchesVisitorName && matchesBadgeNumber && matchesStatus;
   });
+
+  const paginatedData = filteredData.slice((page - 1) * pageSize, page * pageSize);
+  const totalPages = Math.ceil(filteredData.length / pageSize);
+
+  // Table columns for GenericTable
+  const genericColumns: TableColumn<Badge>[] = [
+    {
+      key: "visitorName",
+      header: t("common.visitorName") || "Visitor Name",
+      accessor: (item) => item.visitorName,
+    },
+    {
+      key: "badgeNumber",
+      header: t("common.badgeNumber") || "Badge Number",
+      accessor: (item) => item.badgeNumber,
+    },
+    {
+      key: "issuedDate",
+      header: t("common.issuedDate") || "Issued Date",
+      accessor: (item) => item.issuedDate,
+    },
+    {
+      key: "status",
+      header: t("common.status") || "Status",
+      accessor: (item) => item.status,
+    },
+  ];
+
+  // Selection logic
+  const [selected, setSelected] = useState<(string | number)[]>([]);
+  const getItemId = (item: Badge) => item.id;
+  const getItemDisplayName = (item: Badge) => item.visitorName;
+  const handleSelectItem = (id: string | number) => {
+    setSelected((prev) => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  };
+  const handleSelectAll = () => {
+    if (selected.length === paginatedData.length) {
+      setSelected([]);
+    } else {
+      setSelected(paginatedData.map(getItemId));
+    }
+  };
 
   return (
     <main className="min-h-screen w-full bg-background text-foreground">
@@ -59,125 +81,67 @@ export default function BadgesViewPage() {
         <div className="w-full space-y-4 sm:space-y-6">
           <h4 className="font-bold text-lg sm:text-xl lg:text-2xl tracking-tight text-primary flex items-center gap-2">
             <span className="inline-block w-1.5 h-4 sm:w-2 sm:h-6 rounded-full bg-primary/70"></span>
-            Badges
+            {t("common.badges") || "Badges"}
           </h4>
           <p className="text-sm sm:text-base text-muted-foreground font-medium">
-            Manage visitor badges here.
+            {t("common.manageBadges") || "Manage visitor badges here."}
           </p>
 
           {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-4">
             <Input
-              placeholder="Search by visitor name..."
-              value={(table.getColumn("visitorName")?.getFilterValue() as string) ?? ""}
-              onChange={(event) =>
-                table.getColumn("visitorName")?.setFilterValue(event.target.value)
-              }
+              placeholder={t("common.searchByVisitorName") || "Search by visitor name..."}
+              value={visitorNameFilter}
+              onChange={(event) => setVisitorNameFilter(event.target.value)}
               className="max-w-sm"
             />
             <Input
-              placeholder="Search by badge number..."
-              value={(table.getColumn("badgeNumber")?.getFilterValue() as string) ?? ""}
-              onChange={(event) =>
-                table.getColumn("badgeNumber")?.setFilterValue(event.target.value)
-              }
+              placeholder={t("common.searchByBadgeNumber") || "Search by badge number..."}
+              value={badgeNumberFilter}
+              onChange={(event) => setBadgeNumberFilter(event.target.value)}
               className="max-w-sm"
             />
             <Select
-              value={(table.getColumn("status")?.getFilterValue() as string) ?? ""}
-              onValueChange={(value) =>
-                table.getColumn("status")?.setFilterValue(value === "all" ? "" : value)
-              }
+              value={statusFilter}
+              onValueChange={(value) => setStatusFilter(value === "all" ? "" : value)}
             >
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by status" />
+                <SelectValue placeholder={t("common.filterByStatus") || "Filter by status"} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="Active">Active</SelectItem>
-                <SelectItem value="Expired">Expired</SelectItem>
+                <SelectItem value="all">{t("common.allStatus") || "All Status"}</SelectItem>
+                <SelectItem value="Active">{t("common.active") || "Active"}</SelectItem>
+                <SelectItem value="Expired">{t("common.expired") || "Expired"}</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          {/* Responsive Table Container */}
-          <div className="w-full">
-            {/* Mobile Card View for very small screens */}
-            <div className="block sm:hidden space-y-3">
-              {/* Implement mobile card view for badges here */}
-              <div className="bg-card border border-border rounded-lg p-8 text-center">
-                <p className="text-muted-foreground">No badges found.</p>
-              </div>
-            </div>
-
-            {/* Table View for sm and larger screens */}
-            <div className="hidden sm:block">
-              <div className="w-full overflow-x-auto rounded-lg border bg-card border-border shadow-sm">
-                <Table className="min-w-[600px] w-full">
-                  <TableHeader>
-                    {table.getHeaderGroups().map((headerGroup) => (
-                      <TableRow key={headerGroup.id}>
-                        {headerGroup.headers.map((header) => {
-                          return (
-                            <TableCell key={header.id}>
-                              {header.isPlaceholder
-                                ? null
-                                : header.column.getCanSort() ? (
-                                    <button
-                                      onClick={header.column.getToggleSortingHandler()}
-                                      className="flex items-center gap-2"
-                                    >
-                                      {header.column.columnDef.header as string}
-                                      {{
-                                        asc: "🔼",
-                                        desc: "🔽",
-                                      }[header.column.getIsSorted() as string] ?? null}
-                                    </button>
-                                  ) : (
-                                    header.column.columnDef.header as string
-                                  )}
-                            </TableCell>
-                          );
-                        })}
-                      </TableRow>
-                    ))}
-                  </TableHeader>
-                  <TableBody>
-                    {table.getRowModel().rows?.length ? (
-                      table.getRowModel().rows.map((row) => (
-                        <TableRow
-                          key={row.id}
-                          data-state={row.getIsSelected() && "selected"}
-                        >
-                          {row.getVisibleCells().map((cell) => (
-                            <TableCell key={cell.id}>
-                              {cell.renderValue() as string}
-                            </TableCell>
-                          ))}
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell
-                          colSpan={table.getAllColumns().length}
-                          className="h-24 text-center text-muted-foreground"
-                        >
-                          No badges found.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-
-            {/* Pagination */}
-            <Pagination
-              page={table.getState().pagination.pageIndex + 1}
-              pageSize={table.getState().pagination.pageSize}
-              total={table.getFilteredRowModel().rows.length}
-              onPageChange={(page) => table.setPageIndex(page - 1)}
-              onPageSizeChange={(pageSize) => table.setPageSize(pageSize)}
+          {/* Table and Pagination */}
+          <div className="w-full space-y-4">
+            <GenericTable
+              data={paginatedData}
+              columns={genericColumns}
+              selected={selected}
+              page={page}
+              pageSize={pageSize}
+              allChecked={selected.length === paginatedData.length && paginatedData.length > 0}
+              getItemId={getItemId}
+              getItemDisplayName={getItemDisplayName}
+              onSelectItem={handleSelectItem}
+              onSelectAll={handleSelectAll}
+              noDataMessage={t("common.noBadgesFound") || "No badges found."}
+              isLoading={false}
+              onPageChange={setPage}
+              onPageSizeChange={setPageSize}
+            />
+            
+            <CustomPagination
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+              pageSize={pageSize}
+              pageSizeOptions={pageSizeOptions}
+              onPageSizeChange={setPageSize}
             />
           </div>
         </div>

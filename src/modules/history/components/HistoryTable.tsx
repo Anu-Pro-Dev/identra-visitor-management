@@ -14,12 +14,16 @@ import {
   TrendingUp,
   Calendar
 } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
+import { GenericTable, TableColumn } from "@/components/common/GenericTable";
+import { CustomPagination } from "@/components/common/Pagination";
 
 interface HistoryTableProps {
   data?: VisitorHistory[];
 }
 
 export default function HistoryTable({ data = mockHistoryData }: HistoryTableProps) {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [departmentFilter, setDepartmentFilter] = useState("all");
@@ -74,6 +78,52 @@ export default function HistoryTable({ data = mockHistoryData }: HistoryTablePro
     };
   }, [filteredData]);
 
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const pageSizeOptions = [10, 20, 50, 100];
+  const paginatedData = filteredData.slice((page - 1) * pageSize, page * pageSize);
+  const totalPages = Math.ceil(filteredData.length / pageSize);
+
+  // Table columns for GenericTable
+  const genericColumns: TableColumn<any>[] = [
+    {
+      key: "visitorName",
+      header: t("common.visitor") || "Visitor",
+      accessor: (item) => item.visitorName,
+    },
+    {
+      key: "visitTime",
+      header: t("common.visitTime") || "Visit Time",
+      accessor: (item) => `${item.startTime} - ${item.endTime}`,
+    },
+    {
+      key: "status",
+      header: t("common.status") || "Status",
+      accessor: (item) => item.status,
+    },
+    {
+      key: "duration",
+      header: t("common.duration") || "Duration",
+      accessor: (item) => item.duration,
+    },
+  ];
+
+  // Selection logic
+  const [selected, setSelected] = useState<Array<string | number>>([]);
+  const getItemId = (item: any) => item.id;
+  const getItemDisplayName = (item: any) => item.visitorName;
+  const handleSelectItem = (id: string | number) => {
+    setSelected((prev) => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  };
+  const handleSelectAll = () => {
+    if (selected.length === paginatedData.length) {
+      setSelected([]);
+    } else {
+      setSelected(paginatedData.map(getItemId));
+    }
+  };
+
   const handleSearchChange = (search: string) => {
     setSearchTerm(search);
   };
@@ -100,12 +150,10 @@ export default function HistoryTable({ data = mockHistoryData }: HistoryTablePro
   };
 
   const handleExport = () => {
-    // Implement export functionality
     console.log("Exporting history data...");
   };
 
   const handleRefresh = () => {
-    // Implement refresh functionality
     console.log("Refreshing history data...");
   };
 
@@ -236,135 +284,37 @@ export default function HistoryTable({ data = mockHistoryData }: HistoryTablePro
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">Visitor History</CardTitle>
+            <CardTitle className="text-lg">{t("common.visitorHistory") || "Visitor History"}</CardTitle>
             <Badge variant="secondary">
-              {filteredData.length} of {data.length} visits
+              {filteredData.length} of {data.length} {t("common.visits") || "visits"}
             </Badge>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b bg-muted/50">
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                      Visitor
-                    </th>
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                      Visit Time
-                    </th>
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                      Status
-                    </th>
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                      Duration
-                    </th>
-                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredData.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="h-24 text-center text-muted-foreground">
-                        No visitors found.
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredData.map((visitor) => (
-                      <tr key={visitor.id} className="border-b hover:bg-muted/50">
-                        <td className="p-4">
-                          <div className="flex items-center space-x-3">
-                            <div className="flex -space-x-2">
-                              {visitor.avatars.slice(0, 3).map((avatar, index) => (
-                                <div
-                                  key={index}
-                                  className="h-8 w-8 rounded-full bg-muted border-2 border-background flex items-center justify-center text-xs font-medium"
-                                >
-                                  {visitor.visitorName.charAt(0)}
-                                </div>
-                              ))}
-                              {visitor.avatars.length > 3 && (
-                                <div className="h-8 w-8 rounded-full bg-muted border-2 border-background flex items-center justify-center text-xs font-medium">
-                                  +{visitor.avatars.length - 3}
-                                </div>
-                              )}
-                            </div>
-                            <div>
-                              <div className="font-medium text-foreground">{visitor.visitorName}</div>
-                              <div className="text-sm text-muted-foreground">
-                                {visitor.company} • {visitor.department}
-                              </div>
-                              {visitor.badge && (
-                                <Badge 
-                                  variant="outline" 
-                                  className="mt-1 text-xs bg-purple-100 text-purple-800 border-purple-200"
-                                >
-                                  • {visitor.badge}
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          <div className="flex items-center space-x-2">
-                            <Clock className="h-4 w-4 text-muted-foreground" />
-                            <div>
-                              <div className="font-medium">
-                                {visitor.startTime} - {visitor.endTime}
-                              </div>
-                              <div className="text-sm text-muted-foreground">
-                                {new Date(visitor.visitDate).toLocaleDateString('en-US', { 
-                                  month: 'short', 
-                                  day: 'numeric', 
-                                  year: 'numeric' 
-                                })}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          <Badge 
-                            variant="outline" 
-                            className={`${
-                              visitor.status === "In progress" ? "bg-blue-100 text-blue-800 border-blue-200" :
-                              visitor.status === "Visited" ? "bg-green-100 text-green-800 border-green-200" :
-                              visitor.status === "Yet to arrive" ? "bg-yellow-100 text-yellow-800 border-yellow-200" :
-                              visitor.status === "Cancelled" ? "bg-red-100 text-red-800 border-red-200" :
-                              "bg-gray-100 text-gray-800 border-gray-200"
-                            }`}
-                          >
-                            {visitor.status === "In progress" && <Clock className="h-3 w-3 mr-1" />}
-                            {visitor.status === "Visited" && <UserCheck className="h-3 w-3 mr-1" />}
-                            {visitor.status === "Yet to arrive" && <AlertCircle className="h-3 w-3 mr-1" />}
-                            <span>{visitor.status}</span>
-                          </Badge>
-                        </td>
-                        <td className="p-4">
-                          <div className="font-medium">{visitor.duration}</div>
-                        </td>
-                        <td className="p-4">
-                          <div className="flex items-center space-x-2">
-                            <button className="text-sm text-blue-600 hover:text-blue-800">
-                              View
-                            </button>
-                            <button className="text-sm text-gray-600 hover:text-gray-800">
-                              Edit
-                            </button>
-                            <button className="text-sm text-green-600 hover:text-green-800">
-                              Export
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <GenericTable
+            data={paginatedData}
+            columns={genericColumns}
+            selected={selected}
+            page={page}
+            pageSize={pageSize}
+            allChecked={selected.length === paginatedData.length && paginatedData.length > 0}
+            getItemId={getItemId}
+            getItemDisplayName={getItemDisplayName}
+            onSelectItem={handleSelectItem}
+            onSelectAll={handleSelectAll}
+            noDataMessage={t("common.noResults") || "No results."}
+            isLoading={false}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+          />
+          <CustomPagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            pageSize={pageSize}
+            pageSizeOptions={pageSizeOptions}
+            onPageSizeChange={setPageSize}
+          />
         </CardContent>
       </Card>
     </div>
