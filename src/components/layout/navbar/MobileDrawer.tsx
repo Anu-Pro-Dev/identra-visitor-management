@@ -42,11 +42,10 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
           <SheetTitle className="text-left">Navigation</SheetTitle>
         </SheetHeader>
         <div className="mt-6">
-          <nav className="space-y-2">
+          <nav className="space-y-2 px-2">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.url || pathname.startsWith(item.url + "/");
-              
               return (
                 <Link
                   key={item.url}

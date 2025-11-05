@@ -44,22 +44,21 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ navItems }) => {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 max-w-screen-2xl items-center justify-between px-4">
-        {/* Left Section: Logo and Desktop Navigation */}
+      <div className="container mx-auto flex h-16 max-w-screen-2xl items-center justify-between px-4">
         <div className="flex items-center">
           <NavbarLogo />
           <DesktopNav navItems={navItems} />
         </div>
-
-        {/* Right Section: User Profile and Mobile Menu */}
         <div className="flex items-center">
           {user && <UserProfileSection user={user} />}
-          
+
           <MobileDrawer
             navItems={navItems}
             isOpen={isMobileMenuOpen}
             onOpenChange={setIsMobileMenuOpen}
-            trigger={<MobileMenuToggle onClick={() => setIsMobileMenuOpen(true)} />}
+            trigger={
+              <MobileMenuToggle onClick={() => setIsMobileMenuOpen(true)} />
+            }
           />
         </div>
       </div>
